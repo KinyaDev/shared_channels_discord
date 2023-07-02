@@ -1,0 +1,21 @@
+{
+  "name": "interchannels-bot",
+  "version": "1.0.0",
+  "description": "Interchannels Bot",
+  "main": "bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "KinyaDev",
+  "license": "ISC",
+  "dependencies": {
+    "better-sqlite3": "^8.4.0",
+    "discord.js": "^14.11.0",
+    "dotenv": "^16.3.1"
+  },
+  "keywords": [
+    "bot",
+    "channels",
+    "intererver"
+  ]
+}
