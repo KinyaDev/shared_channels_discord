@@ -6,6 +6,7 @@ const {
   Events,
   ActivityType,
   AllowedMentionsTypes,
+  BaseGuildTextChannel,
 } = require("discord.js");
 
 const fs = require("fs");
@@ -170,6 +171,88 @@ client.on("guildCreate", async (guild) => {
   console.log("I have been invited on the server: " + guild.name);
 });
 
+client.on("messageDelete", (message) => {
+  if (message.author.bot) return;
+
+  unSync();
+
+  let sync = db.getSyncChannel(message.channelId);
+  let syncs = db
+    .getSync()
+    .filter((s) => s.code === sync.code)
+    .filter((s) => s.channel_id !== sync.channel_id);
+
+  if (sync) {
+    syncs.forEach(async (s) => {
+      let ch = await client.channels.fetch(s.channel_id);
+
+      let params = {
+        name: `@${message.author.username}${
+          message.guild.id === ch.guildId ? "" : ` - ${message.guild.name}`
+        }`,
+      };
+
+      if (ch && ch instanceof BaseGuildTextChannel) {
+        for (let [id, msg] of ch.messages.cache) {
+          if (
+            msg.author.username === params.name &&
+            message.content === msg.content
+          ) {
+            msg.delete();
+          }
+        }
+      }
+    });
+
+    if (message.reference) {
+      params.ref_id = message.reference.messageId;
+    }
+  }
+});
+
+client.on("messageUpdate", async (old, message) => {
+  if (old.author.bot) return;
+
+  unSync();
+
+  let sync = db.getSyncChannel(message.channelId);
+  let syncs = db
+    .getSync()
+    .filter((s) => s.code === sync.code)
+    .filter((s) => s.channel_id !== sync.channel_id);
+
+  if (sync) {
+    syncs.forEach(async (s) => {
+      let ch = await client.channels.fetch(s.channel_id);
+
+      let params = {
+        channel_id: s.channel_id,
+        name: `@${message.author.username}${
+          message.guild.id === ch.guildId ? "" : ` - ${message.guild.name}`
+        }`,
+        avatar: message.author.displayAvatarURL(),
+        message: message.content,
+        files: message.attachments.map((a) => a.url),
+        current_channel_id: message.channel.id,
+      };
+
+      if (ch && ch instanceof BaseGuildTextChannel) {
+        for (let [id, msg] of ch.messages.cache) {
+          if (
+            msg.author.username === params.name &&
+            old.content === msg.content
+          ) {
+            wh.edit(ch.id, msg.id, params.name, params.avatar, message.content);
+          }
+        }
+      }
+    });
+
+    if (message.reference) {
+      params.ref_id = message.reference.messageId;
+    }
+  }
+});
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
@@ -196,22 +279,25 @@ client.on("messageCreate", async (message) => {
       if (!ch.topic || !ch.topic.startsWith("🌎"))
         ch.setTopic("🌎 Shared Channel");
 
-      let params = {
-        channel_id: l.channel_id,
-        name: `@${message.author.username}${
-          message.guild.id === ch.guildId ? "" : ` - ${message.guild.name}`
-        }`,
-        avatar: message.author.displayAvatarURL(),
-        message: message.content,
-        files: message.attachments.map((a) => a.url),
-        current_channel_id: message.channel.id,
-      };
+      let blacklist = db.getBlacklist(ch.guildId);
+      if (!blacklist.includes(message.author.id)) {
+        let params = {
+          channel_id: l.channel_id,
+          name: `@${message.author.username}${
+            message.guild.id === ch.guildId ? "" : ` - ${message.guild.name}`
+          }`,
+          avatar: message.author.displayAvatarURL(),
+          message: message.content,
+          files: message.attachments.map((a) => a.url),
+          current_channel_id: message.channel.id,
+        };
 
-      if (message.reference) {
-        params.ref_id = message.reference.messageId;
+        if (message.reference) {
+          params.ref_id = message.reference.messageId;
+        }
+
+        wh.send(params);
       }
-
-      wh.send(params);
     });
   }
 });

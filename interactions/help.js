@@ -48,6 +48,11 @@ module.exports = {
             },
           ],
         },
+        {
+          title: "Blacklist",
+          description:
+            "Stop receiving the message of a user in your server, give the username without the @ as a parameter. If it the username changes, it still works.",
+        },
       ],
     });
   },

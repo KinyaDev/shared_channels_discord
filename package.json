@@ -1,5 +1,5 @@
 {
-  "name": "interchannels-bot",
+  "name": "shared-channels-bot",
   "version": "1.0.0",
   "description": "Interchannels Bot",
   "main": "bot.js",
@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "KinyaDev",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "better-sqlite3": "^8.4.0",
     "discord.js": "^14.11.0",
@@ -17,5 +17,14 @@
     "bot",
     "channels",
     "intererver"
-  ]
+  ],
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KinyaDev/shared_channels_discord.git"
+  },
+  "bugs": {
+    "url": "https://github.com/KinyaDev/shared_channels_discord/issues"
+  },
+  "homepage": "https://github.com/KinyaDev/shared_channels_discord#readme"
 }

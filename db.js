@@ -1,4 +1,4 @@
-const { Client } = require("discord.js");
+const { Client, BaseGuildTextChannel } = require("discord.js");
 
 const db = require("better-sqlite3")("interchannels.db", {
   fileMustExist: false,
@@ -9,6 +9,9 @@ db.prepare(
 ).run();
 db.prepare(
   "CREATE TABLE IF NOT EXISTS joined (code VARCHAR(7), channel_id VARCHAR(18), status_id VARCHAR(18))"
+).run();
+db.prepare(
+  "CREATE TABLE IF NOT EXISTS blacklist (guild_id VARCHAR(18), user_id VARCHAR(18))"
 ).run();
 
 module.exports = {
@@ -36,11 +39,42 @@ module.exports = {
 
     return code;
   },
-  createSync(code, channel_id, status_id) {
+  createSync(code, channel_id) {
     db.prepare("INSERT INTO joined (code, channel_id) VALUES (?, ?)").run(
       code,
       channel_id
     );
+  },
+  /**
+   *
+   * @param {string} guild_id
+   */
+  getSyncChannelsGuild(guild_id) {
+    let res = [];
+    let hosts = db
+      .prepare("SELECT * FROM host WHERE guild_id = ?")
+      .all(guild_id);
+    hosts.forEach((h) => {
+      let thatHostSyncs = this.getByCode(h.code);
+      res.push(thatHostSyncs);
+    });
+
+    return res;
+  },
+  /**
+   *
+   * @param {Client} client
+   */
+  async getUserByUsername(username, client) {
+    if (client.guilds && client.guilds.cache) {
+      for (let [id, guild] of client.guilds.cache) {
+        let user = guild.members.cache.find(
+          (u) => u.user.username === username
+        );
+
+        if (user) return user;
+      }
+    }
   },
   getRoom(code) {
     return db.prepare("SELECT * FROM host WHERE code = ?").get(code);
@@ -69,5 +103,28 @@ module.exports = {
     }
 
     return res;
+  },
+  blacklist(guild_id, user_id) {
+    let user = db
+      .prepare("SELECT * FROM blacklist WHERE user_id = ?")
+      .get(user_id);
+
+    if (user) {
+      db.prepare("DELETE FROM blacklist WHERE user_id = ?").run(user_id);
+      return true;
+    } else
+      db.prepare("INSERT INTO blacklist (guild_id, user_id) VALUES (?, ?)").run(
+        guild_id,
+        user_id
+      );
+    return false;
+  },
+  getBlacklist(guild_id) {
+    let users = db
+      .prepare("SELECT * FROM blacklist WHERE guild_id = ?")
+      .all(guild_id);
+    if (users instanceof Array) {
+      return users.map((u) => u.user_id);
+    } else return [users] || [users].map((u) => u.user_id);
   },
 };
