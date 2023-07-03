@@ -5,6 +5,7 @@ const {
   Routes,
   Events,
   ActivityType,
+  AllowedMentionsTypes,
 } = require("discord.js");
 
 const fs = require("fs");
@@ -20,6 +21,7 @@ const client = new Client({
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMessages,
   ],
+  allowedMentions: { parse: [] },
 });
 
 client.once(Events.ClientReady, async (c) => {
@@ -137,7 +139,7 @@ client.on("channelDelete", (channel) => {
   }
 });
 
-client.on("channelCreate", (channel) => {
+client.on("channelCreate", async (channel) => {
   if (channel.name.startsWith("inter-")) {
     let code = channel.name.split("-")[1];
     if (db.getRoom(code)) {
@@ -157,6 +159,7 @@ client.on("channelCreate", (channel) => {
       channel.send(
         `Concratulation! This channel has been synced with a room. It is the ${num} to be synced to that room.`
       );
+      db.createStatusMessage(interaction.guildId);
     } else {
       channel.send(`This room doesn't exist.`);
     }

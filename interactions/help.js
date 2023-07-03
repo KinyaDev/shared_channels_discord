@@ -29,17 +29,22 @@ module.exports = {
             {
               name: "room join",
               value:
-                "With `/room join [code] [channel]`, you sync a channel to a room thanks to the code. There is an alternative: create a channel called `inter-[code of the room]`",
+                "With `/room join [code] [#channel]`, you sync a channel to a room thanks to the code. There is an alternative: create a channel called `inter-[code of the room].`",
+            },
+            {
+              name: "room leave",
+              value:
+                "With `/room leave [#channel]`, your channel leaves the room.",
             },
             {
               name: "room list",
               value:
-                "`/room list` shows the list of rooms created within the server",
+                "`/room list` shows the list of rooms created within the server.",
             },
             {
               name: "room publics",
               value:
-                "`room publics` shows the list of public rooms created within multiple servers",
+                "`room publics` shows the list of public rooms created within multiple servers.",
             },
           ],
         },

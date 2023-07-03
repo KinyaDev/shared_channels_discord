@@ -8,7 +8,7 @@ db.prepare(
   "CREATE TABLE IF NOT EXISTS host (private BOOLEAN, code VARCHAR(7), guild_id VARCHAR(18))"
 ).run();
 db.prepare(
-  "CREATE TABLE IF NOT EXISTS joined (code VARCHAR(7), channel_id VARCHAR(18))"
+  "CREATE TABLE IF NOT EXISTS joined (code VARCHAR(7), channel_id VARCHAR(18), status_id VARCHAR(18))"
 ).run();
 
 module.exports = {
@@ -36,7 +36,7 @@ module.exports = {
 
     return code;
   },
-  createSync(code, channel_id) {
+  createSync(code, channel_id, status_id) {
     db.prepare("INSERT INTO joined (code, channel_id) VALUES (?, ?)").run(
       code,
       channel_id
@@ -51,7 +51,6 @@ module.exports = {
   delHost(guild_id) {
     db.prepare("DELETE FROM host WHERE guild_id = ?").run(guild_id);
   },
-
   getSync() {
     let g = db.prepare("SELECT * FROM joined").all();
     return g instanceof Array ? g : [g];

@@ -3,6 +3,7 @@ const {
   PermissionFlagsBits,
   ChatInputCommandInteraction,
   Client,
+  BaseGuildTextChannel,
 } = require("discord.js");
 const db = require("../db");
 
@@ -45,6 +46,17 @@ module.exports = {
     )
     .addSubcommand((sc) =>
       sc
+        .setName("leave")
+        .setDescription("leave an interserver room")
+        .addChannelOption((opt) =>
+          opt
+            .setName("channel")
+            .setDescription("The channel to be synced with the joined room.")
+            .setRequired(true)
+        )
+    )
+    .addSubcommand((sc) =>
+      sc
         .setName("publics")
         .setDescription("get the list of all public interserver rooms.")
     )
@@ -73,27 +85,29 @@ module.exports = {
       });
     } else if (interaction.options.getSubcommand() === "join") {
       let ch = interaction.options.getChannel("channel");
-      let code = interaction.options.getString("code");
-      if (db.getRoom(code)) {
-        db.createSync(code, ch.id);
+      if (ch && ch instanceof BaseGuildTextChannel) {
+        let code = interaction.options.getString("code");
+        if (db.getRoom(code)) {
+          interaction.editReply({ content: "The channel as been synced!" });
 
-        let num = `${db.getSync().map((s) => s.code === code).length}`;
-        if (num.endsWith("1")) {
-          num = num + "st";
-        } else if (num.endsWith("2")) {
-          num = num + "nd";
-        } else if (num.endsWith("3")) {
-          num = num + "rd";
+          let num = `${db.getSync().map((s) => s.code === code).length + 1}`;
+          if (num.endsWith("1")) {
+            num = num + "st";
+          } else if (num.endsWith("2")) {
+            num = num + "nd";
+          } else if (num.endsWith("3")) {
+            num = num + "rd";
+          } else {
+            num = num + "th";
+          }
+          ch.send(
+            `Concratulation! This channel has been synced with a room. It is the ${num} to be synced to that room.`
+          );
+
+          db.createSync(code, ch.id);
         } else {
-          num = num + "th";
+          interaction.editReply(`This room doesn't exist.`);
         }
-
-        interaction.editReply({ content: "The channel as been synced!" });
-        ch.send(
-          `Concratulation! This channel has been synced with a room. It is the ${num} to be synced to that room.`
-        );
-      } else {
-        interaction.editReply(`This room doesn't exist.`);
       }
     } else if (interaction.options.getSubcommand() === "publics") {
       let fields = [];
@@ -160,6 +174,11 @@ module.exports = {
           ],
         });
       }, 1000);
+    } else if (interaction.options.getSubcommand() === "leave") {
+      let ch = interaction.options.getChannel("channel");
+      interaction.editReply("The room has been left!");
+
+      db.unSync(ch.id);
     }
   },
 };
