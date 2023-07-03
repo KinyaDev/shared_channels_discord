@@ -192,7 +192,8 @@ client.on("messageCreate", async (message) => {
       let ch = await client.channels.fetch(l.channel_id);
       if (!ch.topic || !ch.topic.startsWith("🌎"))
         ch.setTopic("🌎 Shared Channel");
-      wh.send({
+
+      let params = {
         channel_id: l.channel_id,
         name: `@${message.author.username}${
           message.guild.id === ch.guildId ? "" : ` - ${message.guild.name}`
@@ -200,7 +201,14 @@ client.on("messageCreate", async (message) => {
         avatar: message.author.displayAvatarURL(),
         message: message.content,
         files: message.attachments.map((a) => a.url),
-      });
+        current_channel_id: message.channel.id,
+      };
+
+      if (message.reference) {
+        params.ref_id = message.reference.messageId;
+      }
+
+      wh.send(params);
     });
   }
 });

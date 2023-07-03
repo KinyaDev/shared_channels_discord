@@ -34,8 +34,8 @@ function webhooks(bot) {
         console.error("Error trying to send a message: ", error);
       }
     },
-    async send(args) {
-      let { channel_id, name, avatar, message, files } = args;
+    async reply(args) {
+      let { channel_id, name, avatar, message, files, ref_id } = args;
       const channel = bot.channels.cache.get(channel_id);
       try {
         let webhook = await this.get(channel_id);
@@ -49,6 +49,52 @@ function webhooks(bot) {
           username: name,
           avatarURL: avatar,
           files: files,
+        });
+      } catch (error) {
+        console.error("Error trying to send a message: ", error);
+      }
+    },
+    async send(args) {
+      let {
+        channel_id,
+        current_channel_id,
+        name,
+        avatar,
+        message,
+        files,
+        ref_id,
+      } = args;
+
+      const channel = bot.channels.cache.get(channel_id);
+      const channel_in = bot.channels.cache.get(current_channel_id);
+      try {
+        let webhook = await this.get(channel_id);
+
+        if (!webhook) {
+          webhook = await channel.createWebhook({ name: name, avatar: avatar });
+        }
+
+        let repliedTo = ref_id
+          ? await channel_in.messages.fetch(ref_id)
+          : undefined;
+
+        return await webhook.send({
+          content: message,
+          username: name,
+          avatarURL: avatar,
+          files: files,
+          embeds: repliedTo
+            ? [
+                {
+                  title: "Reply",
+                  author: {
+                    name: repliedTo.author.username,
+                    icon_url: repliedTo.author.displayAvatarURL(),
+                  },
+                  description: repliedTo.content,
+                },
+              ]
+            : null,
         });
       } catch (error) {
         console.error("Error trying to send a message: ", error);
